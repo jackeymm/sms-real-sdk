@@ -43,40 +43,64 @@ public class SmsKeyPairUtil {
 
 
     public String encrypt(String temail, String encryptString) {
-
         if(StringUtil.isEmpty(temail) || StringUtil.isEmpty(encryptString)){
-            throw new EncryptByWrongInputException("temail : "+temail +"| encrypt : "+encryptString);
+            throw new WrongInputException("temail : "+temail +"| encrypt : "+encryptString);
         }
 
-        String result = null;
-
         KeyPair keyPair = getKeyPairByTemail(temail);
+
         try {
-            result = new String (RSAKeyPairUtil.encrypt(encryptString.getBytes(), keyPair.getPublicKey()));
+            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.encrypt(StringUtil.base64String2ByteFun(encryptString), keyPair.getPublicKey()));
         } catch (Exception e) {
             throw new EncryptException(e.getMessage());
         }
-        return result;
     }
 
     public String decrypt(String temail, String decryptString) {
         if(StringUtil.isEmpty(temail) || StringUtil.isEmpty(decryptString)){
             throw new DecryptByWrongInputException("temail :" + temail + "| decrypt : "+ decryptString);
         }
+
         KeyPair keyPair = getKeyPairByTemail(temail);
-        String result = null;
 
         try {
-            result = new String (RSAKeyPairUtil.decrypt(decryptString.getBytes(), keyPair.getPrivateKey()));
+            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.decrypt(StringUtil.base64String2ByteFun(decryptString), keyPair.getPrivateKey()));
         } catch (Exception e) {
             throw new DecryptException(e.getMessage());
         }
 
-        return result;
     }
 
     private KeyPair getKeyPairByTemail(String temail){
         KeyPair keyPair = ehcache.get(temail);
         return keyPair;
+    }
+
+    public String sign(String temail, String strData) {
+        if(StringUtil.isEmpty(temail) || StringUtil.isEmpty(strData)){
+            throw new WrongInputException("temail :" + temail + "| sign : "+ strData);
+        }
+
+        KeyPair keyPair = getKeyPairByTemail(temail);
+
+        try {
+            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.sign(StringUtil.base64String2ByteFun(strData), keyPair.getPrivateKey()));
+        } catch (Exception e) {
+            throw new RSAException(e.getMessage());
+        }
+    }
+
+    public boolean verify(String temail, String strData, String strSign) {
+        if(StringUtil.isEmpty(temail) || StringUtil.isEmpty(strData) || StringUtil.isEmpty(strSign)){
+            throw new WrongInputException("temail :" + temail + "| sign : "+ strSign + "| data : " + strData);
+        }
+
+        KeyPair keyPair = getKeyPairByTemail(temail);
+
+        try {
+            return RSAKeyPairUtil.verify(StringUtil.base64String2ByteFun(strData), StringUtil.base64String2ByteFun(strSign), keyPair.getPublicKey());
+        } catch (Exception e) {
+            throw new RSAException(e.getMessage());
+        }
     }
 }

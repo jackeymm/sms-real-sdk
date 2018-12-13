@@ -6,7 +6,6 @@ import com.jackeymm.sms.sdk.infrastructure.Ehcache;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.testcontainers.shaded.org.bouncycastle.jcajce.provider.asymmetric.RSA;
 
 import java.util.Map;
 
@@ -85,7 +84,7 @@ public class SmsKeyPairUtilTest {
         assertThat(keyPair.getPublicKey()).isNotNull();
     }
 
-    @Test(expected = EncryptByWrongInputException.class)
+    @Test(expected = WrongInputException.class)
     public void encryptFailedByWrongInput(){
         smsKeyPairUtil.encrypt(null, "");
     }
@@ -109,10 +108,39 @@ public class SmsKeyPairUtilTest {
     public void decryptSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
         String encrypt = smsKeyPairUtil.encrypt(temail, strTest);
-        System.out.println(encrypt);
+        System.out.println("encrypt : "+encrypt);
         String result = smsKeyPairUtil.decrypt(this.temail, encrypt);
-        System.out.println(result);
+        System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(encrypt);
     }
+
+    @Test(expected = WrongInputException.class)
+    public void signWithWrongInputFailed(){
+        smsKeyPairUtil.sign(null, null);
+    }
+
+    @Test
+    public void signSuccessfully(){
+        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
+        String strSign = smsKeyPairUtil.sign(temail, strTest);
+        System.out.println("strSign : " + strSign);
+        assertThat(strSign).isNotNull();
+        assertThat(strSign).isNotEqualTo(strTest);
+    }
+
+    @Test(expected = WrongInputException.class)
+    public void verifyWithWrongInputFailed(){
+        smsKeyPairUtil.verify(null, null, null);
+    }
+
+    @Test
+    public void verifySuccessfully(){
+        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
+        String strSign = smsKeyPairUtil.sign(temail, strTest);
+        System.out.println("sign : "+strSign);
+        boolean result = smsKeyPairUtil.verify(temail, strTest, strSign);
+        assertThat(result).isEqualTo(true);
+    }
+
 }
