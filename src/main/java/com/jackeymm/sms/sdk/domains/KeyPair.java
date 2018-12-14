@@ -7,11 +7,10 @@ public class KeyPair implements Serializable {
     private String temail;
     private String publicKey;
     private String privateKey;
-    private Long createTime;
-    private Long updateTime;
 
-    KeyPair(){}
-    KeyPair(String token, String temail){
+    public KeyPair(){}
+
+    public KeyPair(String token, String temail){
         this.token = token;
         this.temail = temail;
     }

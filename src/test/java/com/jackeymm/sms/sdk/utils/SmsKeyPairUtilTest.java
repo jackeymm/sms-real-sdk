@@ -2,12 +2,13 @@ package com.jackeymm.sms.sdk.utils;
 
 import com.jackeymm.sms.sdk.domains.KeyPair;
 import com.jackeymm.sms.sdk.exceptions.*;
-import com.jackeymm.sms.sdk.infrastructure.Ehcache;
+import com.jackeymm.sms.sdk.infrastructure.EhCache;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,11 +23,9 @@ public class SmsKeyPairUtilTest {
     private String publicKey;
     private KeyPair keyPair;
     private HttpUtil httpUtil = Mockito.mock(HttpUtil.class);
-    private Ehcache ehcache = Mockito.mock(Ehcache.class);
+    private EhCache ehcache = Mockito.mock(EhCache.class);
     private SmsKeyPairUtil smsKeyPairUtil = new SmsKeyPairUtil(httpUtil, ehcache);
     private String strTest = "RSA test";
-    private String encryptString;
-    private String decryptString;
 
 
     @Before
@@ -37,9 +36,6 @@ public class SmsKeyPairUtilTest {
             this.privateKey = RSAKeyPairUtil.getPrivateKeyStr(keyMap);
             this.publicKey = RSAKeyPairUtil.getPublicKeyStr(keyMap);
             this.keyPair = new KeyPair(token, temail, privateKey, publicKey);
-//            this.encryptString = new String(RSAKeyPairUtil.encrypt(strTest.getBytes(), publicKey));
-//            this.decryptString = new String(RSAKeyPairUtil.decrypt(encryptString.getBytes(), privateKey));
-
         } catch (Exception e) {
             throw new RSAException(e.getMessage());
         }
@@ -62,54 +58,45 @@ public class SmsKeyPairUtilTest {
 
     }
 
-//    @Test(expected = RegisterExistExceptin.class)
-//    public void registerKeyPairExistFailed(){
-//        when(httpUtil.registerKeypair(any(String.class), any(String.class))).thenReturn(keyPair);
-//        KeyPair keyPair = smsKeyPairUtil.register(token, temail);
-//        assertThat(keyPair).isNotNull();
-//        smsKeyPairUtil.register(token, temail);
-//
-//    }
-
     @Test(expected = QueryKeyPairIsNullException.class)
     public void queryKeyPairByTemailNotFound(){
-        smsKeyPairUtil.queryKeyPairByTemail(this.temail);
+        smsKeyPairUtil.queryKeyPairByTemail(this.token, this.temail);
     }
 
     @Test
     public void  QueryKeyPairByTemailSuccessfully(){
-        when(httpUtil.queryKeyPairByTemail(any(String.class))).thenReturn(this.keyPair);
-        KeyPair keyPair = smsKeyPairUtil.queryKeyPairByTemail(this.temail);
+        when(httpUtil.queryKeyPairByTemail(any(String.class), any(String.class))).thenReturn(this.keyPair);
+        KeyPair keyPair = smsKeyPairUtil.queryKeyPairByTemail(this.token, this.temail);
         assertThat(keyPair).isNotNull();
         assertThat(keyPair.getPublicKey()).isNotNull();
     }
 
     @Test(expected = WrongInputException.class)
     public void encryptFailedByWrongInput(){
-        smsKeyPairUtil.encrypt(null, "");
+        smsKeyPairUtil.encrypt(null,null, "");
     }
 
 
     @Test
     public void encryptSuccessfully(){
-        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
-        String result = smsKeyPairUtil.encrypt(temail, strTest);
+        when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
+        String result = smsKeyPairUtil.encrypt(token, temail, strTest);
         System.out.println("result : "+result);
         assertThat(result).isNotNull();
-        assertThat(result).isNotEqualTo(encryptString);
+        assertThat(result).isNotEqualTo(strTest);
     }
 
     @Test(expected = DecryptByWrongInputException.class)
     public void decryptFaileByWrongInput(){
-        smsKeyPairUtil.decrypt(null, null);
+        smsKeyPairUtil.decrypt(null, null, null);
     }
 
     @Test
     public void decryptSuccessfully(){
-        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
-        String encrypt = smsKeyPairUtil.encrypt(temail, strTest);
+        when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
+        String encrypt = smsKeyPairUtil.encrypt(token, temail, strTest);
         System.out.println("encrypt : "+encrypt);
-        String result = smsKeyPairUtil.decrypt(this.temail, encrypt);
+        String result = smsKeyPairUtil.decrypt(token, this.temail, encrypt);
         System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(encrypt);
@@ -117,13 +104,13 @@ public class SmsKeyPairUtilTest {
 
     @Test(expected = WrongInputException.class)
     public void signWithWrongInputFailed(){
-        smsKeyPairUtil.sign(null, null);
+        smsKeyPairUtil.sign(null,null, null);
     }
 
     @Test
     public void signSuccessfully(){
-        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
-        String strSign = smsKeyPairUtil.sign(temail, strTest);
+        when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
+        String strSign = smsKeyPairUtil.sign(token, temail, strTest);
         System.out.println("strSign : " + strSign);
         assertThat(strSign).isNotNull();
         assertThat(strSign).isNotEqualTo(strTest);
@@ -131,15 +118,15 @@ public class SmsKeyPairUtilTest {
 
     @Test(expected = WrongInputException.class)
     public void verifyWithWrongInputFailed(){
-        smsKeyPairUtil.verify(null, null, null);
+        smsKeyPairUtil.verify(null, null, null, null);
     }
 
     @Test
     public void verifySuccessfully(){
-        when(ehcache.get(any(String.class))).thenReturn(this.keyPair);
-        String strSign = smsKeyPairUtil.sign(temail, strTest);
+        when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
+        String strSign = smsKeyPairUtil.sign(token, temail, strTest);
         System.out.println("sign : "+strSign);
-        boolean result = smsKeyPairUtil.verify(temail, strTest, strSign);
+        boolean result = smsKeyPairUtil.verify(token, temail, strTest, strSign);
         assertThat(result).isEqualTo(true);
     }
 
