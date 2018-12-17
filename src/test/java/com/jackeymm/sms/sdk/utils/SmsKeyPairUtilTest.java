@@ -1,5 +1,6 @@
 package com.jackeymm.sms.sdk.utils;
 
+import com.jackeymm.sms.sdk.config.BeanFactory;
 import com.jackeymm.sms.sdk.domains.KeyPair;
 import com.jackeymm.sms.sdk.exceptions.*;
 import com.jackeymm.sms.sdk.infrastructure.EhCache;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SmsKeyPairUtilTest {
@@ -22,19 +24,19 @@ public class SmsKeyPairUtilTest {
     private String privateKey;
     private String publicKey;
     private KeyPair keyPair;
-    private HttpUtil httpUtil = Mockito.mock(HttpUtil.class);
-    private EhCache ehcache = Mockito.mock(EhCache.class);
-    private SmsKeyPairUtil smsKeyPairUtil = new SmsKeyPairUtil(httpUtil, ehcache);
+    private HttpUtil httpUtil = mock(HttpUtil.class);
+    private EhCache ehcache = mock(EhCache.class);
+    private EncryptionUtil encryptionUtil = BeanFactory.getEncryptionUtilInstance();
+    private SmsKeyPairUtil smsKeyPairUtil = new SmsKeyPairUtil(httpUtil, ehcache, encryptionUtil);
     private String strTest = "RSA test";
-
 
     @Before
     public void init (){
 
         try {
-            this.keyMap = RSAKeyPairUtil.initKey();
-            this.privateKey = RSAKeyPairUtil.getPrivateKeyStr(keyMap);
-            this.publicKey = RSAKeyPairUtil.getPublicKeyStr(keyMap);
+            this.keyMap = encryptionUtil.initKey();
+            this.privateKey = encryptionUtil.getPrivateKeyStr(keyMap);
+            this.publicKey = encryptionUtil.getPublicKeyStr(keyMap);
             this.keyPair = new KeyPair(token, temail, privateKey, publicKey);
         } catch (Exception e) {
             throw new RSAException(e.getMessage());
@@ -81,7 +83,7 @@ public class SmsKeyPairUtilTest {
     public void encryptSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
         String result = smsKeyPairUtil.encrypt(token, temail, strTest);
-        System.out.println("result : "+result);
+        // System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(strTest);
     }
@@ -95,9 +97,9 @@ public class SmsKeyPairUtilTest {
     public void decryptSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
         String encrypt = smsKeyPairUtil.encrypt(token, temail, strTest);
-        System.out.println("encrypt : "+encrypt);
+        // System.out.println("encrypt : "+encrypt);
         String result = smsKeyPairUtil.decrypt(token, this.temail, encrypt);
-        System.out.println("result : "+result);
+        // System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(encrypt);
     }
@@ -111,7 +113,7 @@ public class SmsKeyPairUtilTest {
     public void signSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
         String strSign = smsKeyPairUtil.sign(token, temail, strTest);
-        System.out.println("strSign : " + strSign);
+        // System.out.println("strSign : " + strSign);
         assertThat(strSign).isNotNull();
         assertThat(strSign).isNotEqualTo(strTest);
     }
@@ -125,7 +127,7 @@ public class SmsKeyPairUtilTest {
     public void verifySuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
         String strSign = smsKeyPairUtil.sign(token, temail, strTest);
-        System.out.println("sign : "+strSign);
+        // System.out.println("sign : "+strSign);
         boolean result = smsKeyPairUtil.verify(token, temail, strTest, strSign);
         assertThat(result).isEqualTo(true);
     }

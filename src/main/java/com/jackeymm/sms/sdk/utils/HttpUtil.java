@@ -1,30 +1,29 @@
 package com.jackeymm.sms.sdk.utils;
 
 import com.google.gson.Gson;
+import com.jackeymm.sms.sdk.config.BeanFactory;
 import com.jackeymm.sms.sdk.domains.KeyPair;
+import com.jackeymm.sms.sdk.exceptions.EncryptException;
 import com.jackeymm.sms.sdk.exceptions.WrongInputException;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.CharArrayBuffer;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HttpUtil {
+public class HttpUtil extends BaseHttpUtil {
 
 //    TODO:需要放在配置文件中
     private String httpPath = "http://localhost:8081";
@@ -33,12 +32,18 @@ public class HttpUtil {
 
     private String QUERYKEYPAIR = "/queryKeyPair";
 
+    private CloseableHttpClient closeableHttpClient;
+
+    public HttpUtil(){
+        closeableHttpClient = BeanFactory.getCloseableHttpClientInstance();
+    }
+
     public KeyPair registerKeypair(String token, String temail) {
         if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail)){
             throw new WrongInputException("token : " + token + "| temail : " + temail);
         }
 
-        Map paramMap = new HashMap();
+        Map<String, String> paramMap = new HashMap<>();
         paramMap.put("token", token);
         paramMap.put("temail", temail);
 
@@ -65,9 +70,8 @@ public class HttpUtil {
      */
     public String postMap(String url, Map<String,String> map) {
         String result = null;
-        CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost post = new HttpPost(url);
-        List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+        List<NameValuePair> pairs = new ArrayList<>();
         for(Map.Entry<String,String> entry : map.entrySet()){
             pairs.add(new BasicNameValuePair(entry.getKey(),entry.getValue()));
         }
@@ -77,29 +81,16 @@ public class HttpUtil {
             post.setEntity(new UrlEncodedFormEntity(pairs,"UTF-8"));
             post.setHeader("Content-Type","application/x-www-form-urlencoded");
 
-            response = httpClient.execute(post);
+            response = closeableHttpClient.execute(post);
             if(response != null && response.getStatusLine().getStatusCode() == 201){
                 HttpEntity entity = response.getEntity();
                 result = entityToString(entity);
             }
             return result;
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new EncryptException(e.getMessage());
         }finally {
-            try {
-                httpClient.close();
-                if(response != null){
-                    response.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-        return result;
     }
 
 
@@ -130,33 +121,23 @@ public class HttpUtil {
      */
     public String get(String url){
         String result = null;
-        CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet get = new HttpGet(url);
         get.setHeader("Content-Type","application/x-www-form-urlencoded");
         CloseableHttpResponse response = null;
         try {
-            response = httpClient.execute(get);
+            response = closeableHttpClient.execute(get);
             if(response != null && response.getStatusLine().getStatusCode() == 200){
                 HttpEntity entity = response.getEntity();
                 result = entityToString(entity);
             }
             return result;
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new EncryptException(e.getMessage());
         }finally {
-            try {
-                httpClient.close();
-                if(response != null){
-                    response.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-        return result;
     }
 
-    public static KeyPair String2KeyPair(String httpResult) {
+    private KeyPair String2KeyPair(String httpResult) {
         Gson gson = new Gson();
         Map resultMap = gson.fromJson(httpResult, Map.class);
         Map<String, String> map = (Map<String, String>) resultMap.get("data");

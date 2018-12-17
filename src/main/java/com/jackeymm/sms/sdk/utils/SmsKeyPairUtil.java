@@ -13,14 +13,18 @@ public class SmsKeyPairUtil {
 
     private EhCache ehcache;
 
+    private EncryptionUtil encryptionUtil;
+
     public SmsKeyPairUtil(){
         httpUtil = BeanFactory.getHttpUtilInstance();
         ehcache = BeanFactory.getEhcacheInstance();
+        encryptionUtil = BeanFactory.getEncryptionUtilInstance();
     }
 
-    SmsKeyPairUtil(HttpUtil httpUtil, EhCache ehcache){
+    SmsKeyPairUtil(HttpUtil httpUtil, EhCache ehcache, EncryptionUtil encryptionUtil){
         this.httpUtil = httpUtil;
         this.ehcache = ehcache;
+        this.encryptionUtil = encryptionUtil;
     }
 
     public KeyPair register(String token, String temail) {
@@ -67,7 +71,7 @@ public class SmsKeyPairUtil {
         KeyPair keyPair = queryKeyPairByTemail(token, temail);
 
         try {
-            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.encrypt(StringUtil.base64String2ByteFun(encryptString), keyPair.getPublicKey()));
+            return StringUtil.byte2Base64StringFun(encryptionUtil.encrypt(StringUtil.base64String2ByteFun(encryptString), keyPair.getPublicKey()));
         } catch (Exception e) {
             throw new EncryptException(e.getMessage());
         }
@@ -81,7 +85,7 @@ public class SmsKeyPairUtil {
         KeyPair keyPair = queryKeyPairByTemail(token, temail);
 
         try {
-            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.decrypt(StringUtil.base64String2ByteFun(decryptString), keyPair.getPrivateKey()));
+            return StringUtil.byte2Base64StringFun(encryptionUtil.decrypt(StringUtil.base64String2ByteFun(decryptString), keyPair.getPrivateKey()));
         } catch (Exception e) {
             throw new DecryptException(e.getMessage());
         }
@@ -97,7 +101,7 @@ public class SmsKeyPairUtil {
         KeyPair keyPair = queryKeyPairByTemail(token, temail);
 
         try {
-            return StringUtil.byte2Base64StringFun(RSAKeyPairUtil.sign(StringUtil.base64String2ByteFun(strData), keyPair.getPrivateKey()));
+            return StringUtil.byte2Base64StringFun(encryptionUtil.sign(StringUtil.base64String2ByteFun(strData), keyPair.getPrivateKey()));
         } catch (Exception e) {
             throw new RSAException(e.getMessage());
         }
@@ -111,7 +115,7 @@ public class SmsKeyPairUtil {
         KeyPair keyPair = queryKeyPairByTemail(token, temail);
 
         try {
-            return RSAKeyPairUtil.verify(StringUtil.base64String2ByteFun(strData), StringUtil.base64String2ByteFun(strSign), keyPair.getPublicKey());
+            return encryptionUtil.verify(StringUtil.base64String2ByteFun(strData), StringUtil.base64String2ByteFun(strSign), keyPair.getPublicKey());
         } catch (Exception e) {
             throw new RSAException(e.getMessage());
         }

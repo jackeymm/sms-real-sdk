@@ -14,7 +14,7 @@ public class HttpUtilTest {
 
     private String token = "kmsToken";
 
-    private String temail = RandomUtils.nextInt(1, 100) + "@temail.com";
+    private String temail = RandomUtils.nextInt(1, 10000) + "@temail.com";
 
     @Test(expected = WrongInputException.class)
     public void httpRegisterKeyPairfailed(){
