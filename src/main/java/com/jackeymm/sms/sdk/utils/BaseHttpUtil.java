@@ -6,9 +6,9 @@ import java.util.Map;
 
 public abstract class BaseHttpUtil {
 
-    public abstract KeyPair registerKeypair(String token, String temail);
+    public abstract KeyPair registerKeypair(String token, String email);
 
-    public abstract KeyPair queryKeyPairByTemail(String token, String temail);
+    public abstract KeyPair queryKeyPairByEmail(String token, String email);
 
     public abstract String postMap(String url, Map<String,String> map);
 

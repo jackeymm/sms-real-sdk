@@ -4,20 +4,20 @@ import java.io.Serializable;
 
 public class KeyPair implements Serializable {
     private String token;
-    private String temail;
+    private String email;
     private String publicKey;
     private String privateKey;
 
     public KeyPair(){}
 
-    public KeyPair(String token, String temail){
+    public KeyPair(String token, String email){
         this.token = token;
-        this.temail = temail;
+        this.email = email;
     }
 
-    public KeyPair(String token, String temail, String privateKey, String publicKey) {
+    public KeyPair(String token, String email, String privateKey, String publicKey) {
         this.token = token;
-        this.temail = temail;
+        this.email = email;
         this.privateKey = privateKey;
         this.publicKey = publicKey;
     }
@@ -30,12 +30,12 @@ public class KeyPair implements Serializable {
         this.token = token;
     }
 
-    public String getTemail() {
-        return temail;
+    public String getEmail() {
+        return email;
     }
 
-    public void setTemail(String temail) {
-        this.temail = temail;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPublicKey() {

@@ -12,9 +12,9 @@ public class HttpUtilTest {
 
     private HttpUtil httpUtil = BeanFactory.getHttpUtilInstance();
 
-    private String token = "kmsToken";
+    private String token = "smsToken";
 
-    private String temail = RandomUtils.nextInt(1, 10000) + "@temail.com";
+    private String email = RandomUtils.nextInt(1, 10000) + "@email.com";
 
     @Test(expected = WrongInputException.class)
     public void httpRegisterKeyPairfailed(){
@@ -23,7 +23,7 @@ public class HttpUtilTest {
 
     @Test
     public void httpRegisterKeypairSuccessfully(){
-        KeyPair keyPair = httpUtil.registerKeypair(token, temail);
+        KeyPair keyPair = httpUtil.registerKeypair(token, email);
         assertThat(keyPair).isNotNull();
         assertThat(keyPair.getPublicKey()).isNotNull();
         assertThat(keyPair.getPrivateKey()).isNotNull();
@@ -31,13 +31,13 @@ public class HttpUtilTest {
 
     @Test(expected = WrongInputException.class)
     public void httpQueryKeyPairByWrongInput(){
-        httpUtil.queryKeyPairByTemail(null,null);
+        httpUtil.queryKeyPairByEmail(null,null);
     }
 
     @Test
     public void httpQueryKeyPairSuccessfully(){
-        KeyPair keyPair1 = httpUtil.registerKeypair(token, temail);
-        KeyPair keyPair2 = httpUtil.queryKeyPairByTemail(token, temail);
+        KeyPair keyPair1 = httpUtil.registerKeypair(token, email);
+        KeyPair keyPair2 = httpUtil.queryKeyPairByEmail(token, email);
         assertThat(keyPair1).isEqualToComparingFieldByField(keyPair2);
     }
 }

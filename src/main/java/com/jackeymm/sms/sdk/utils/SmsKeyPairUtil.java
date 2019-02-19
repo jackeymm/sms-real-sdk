@@ -27,11 +27,11 @@ public class SmsKeyPairUtil {
         this.encryptionUtil = encryptionUtil;
     }
 
-    public KeyPair register(String token, String temail) {
+    public KeyPair register(String token, String email) {
         checkToken(token);
-        KeyPair keyPair = httpUtil.registerKeypair(token, temail);
+        KeyPair keyPair = httpUtil.registerKeypair(token, email);
         if(null != keyPair){
-            ehcache.put(temail, keyPair);
+            ehcache.put(email, keyPair);
         }
         return keyPair;
     }
@@ -42,33 +42,33 @@ public class SmsKeyPairUtil {
         }
     }
 
-    public KeyPair queryKeyPairByTemail(String token, String temail) {
-        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail) ){
-            throw new WrongInputException("token : "+token+"|temail : "+temail);
+    public KeyPair queryKeyPairByEmail(String token, String email) {
+        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(email) ){
+            throw new WrongInputException("token : "+token+"|email : "+email);
         }
         KeyPair keyPair;
-        Optional op = ehcache.get(temail);
+        Optional op = ehcache.get(email);
         if(op.isPresent()){
             keyPair = (KeyPair)op.get();
         }else {
-            keyPair = httpUtil.queryKeyPairByTemail(token, temail);
+            keyPair = httpUtil.queryKeyPairByEmail(token, email);
             if(null != keyPair){
-                ehcache.put(temail, keyPair);
+                ehcache.put(email, keyPair);
             }
         }
         if(null == keyPair || null == keyPair.getPrivateKey() || "".equals(keyPair.getPrivateKey())){
-            throw new QueryKeyPairIsNullException("QueryKeyPairIsNull : "+temail);
+            throw new QueryKeyPairIsNullException("QueryKeyPairIsNull : "+email);
         }
         return keyPair;
     }
 
 
-    public String encrypt(String token , String temail, String encryptString) {
-        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail) || StringUtil.isEmpty(encryptString)){
-            throw new WrongInputException("token : "+token+"|temail : "+temail +"| encrypt : "+encryptString);
+    public String encrypt(String token , String email, String encryptString) {
+        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(email) || StringUtil.isEmpty(encryptString)){
+            throw new WrongInputException("token : "+token+"|email : "+email +"| encrypt : "+encryptString);
         }
 
-        KeyPair keyPair = queryKeyPairByTemail(token, temail);
+        KeyPair keyPair = queryKeyPairByEmail(token, email);
 
         try {
             return StringUtil.byte2Base64StringFun(encryptionUtil.encrypt(StringUtil.base64String2ByteFun(encryptString), keyPair.getPublicKey()));
@@ -77,12 +77,12 @@ public class SmsKeyPairUtil {
         }
     }
 
-    public String decrypt(String token, String temail, String decryptString) {
-        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail) || StringUtil.isEmpty(decryptString)){
-            throw new DecryptByWrongInputException("token : "+token+"| temail :" + temail + "| decrypt : "+ decryptString);
+    public String decrypt(String token, String email, String decryptString) {
+        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(email) || StringUtil.isEmpty(decryptString)){
+            throw new DecryptByWrongInputException("token : "+token+"| email :" + email + "| decrypt : "+ decryptString);
         }
 
-        KeyPair keyPair = queryKeyPairByTemail(token, temail);
+        KeyPair keyPair = queryKeyPairByEmail(token, email);
 
         try {
             return StringUtil.byte2Base64StringFun(encryptionUtil.decrypt(StringUtil.base64String2ByteFun(decryptString), keyPair.getPrivateKey()));
@@ -93,12 +93,12 @@ public class SmsKeyPairUtil {
     }
 
 
-    public String sign(String token, String temail, String strData) {
-        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail) || StringUtil.isEmpty(strData)){
-            throw new WrongInputException("token : "+token+"| temail :" + temail + "| sign : "+ strData);
+    public String sign(String token, String email, String strData) {
+        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(email) || StringUtil.isEmpty(strData)){
+            throw new WrongInputException("token : "+token+"| email :" + email + "| sign : "+ strData);
         }
 
-        KeyPair keyPair = queryKeyPairByTemail(token, temail);
+        KeyPair keyPair = queryKeyPairByEmail(token, email);
 
         try {
             return StringUtil.byte2Base64StringFun(encryptionUtil.sign(StringUtil.base64String2ByteFun(strData), keyPair.getPrivateKey()));
@@ -107,12 +107,12 @@ public class SmsKeyPairUtil {
         }
     }
 
-    public boolean verify(String token, String temail, String strData, String strSign) {
-        if(StringUtil.isEmpty(token) ||StringUtil.isEmpty(temail) || StringUtil.isEmpty(strData) || StringUtil.isEmpty(strSign)){
-            throw new WrongInputException("token : "+token+"|temail :" + temail + "| sign : "+ strSign + "| data : " + strData);
+    public boolean verify(String token, String email, String strData, String strSign) {
+        if(StringUtil.isEmpty(token) ||StringUtil.isEmpty(email) || StringUtil.isEmpty(strData) || StringUtil.isEmpty(strSign)){
+            throw new WrongInputException("token : "+token+"|email :" + email + "| sign : "+ strSign + "| data : " + strData);
         }
 
-        KeyPair keyPair = queryKeyPairByTemail(token, temail);
+        KeyPair keyPair = queryKeyPairByEmail(token, email);
 
         try {
             return encryptionUtil.verify(StringUtil.base64String2ByteFun(strData), StringUtil.base64String2ByteFun(strSign), keyPair.getPublicKey());

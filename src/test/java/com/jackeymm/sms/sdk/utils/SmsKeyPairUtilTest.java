@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 public class SmsKeyPairUtilTest {
 
     private String token = "smsToken";
-    private String temail = "a@temail.com";
+    private String email = "a@email.com";
     private Map keyMap;
     private String privateKey;
     private String publicKey;
@@ -37,7 +37,7 @@ public class SmsKeyPairUtilTest {
             this.keyMap = encryptionUtil.initKey();
             this.privateKey = encryptionUtil.getPrivateKeyStr(keyMap);
             this.publicKey = encryptionUtil.getPublicKeyStr(keyMap);
-            this.keyPair = new KeyPair(token, temail, privateKey, publicKey);
+            this.keyPair = new KeyPair(token, email, privateKey, publicKey);
         } catch (Exception e) {
             throw new RSAException(e.getMessage());
         }
@@ -45,30 +45,30 @@ public class SmsKeyPairUtilTest {
 
     @Test(expected = RegisterByWrongTokenException.class)
     public void registerFailedByWrongToken(){
-        smsKeyPairUtil.register("wrongToken", "a@temail.com");
+        smsKeyPairUtil.register("wrongToken", "a@email.com");
     }
 
     @Test
     public void registerKeyPairSuccessfully(){
         when(httpUtil.registerKeypair(any(String.class), any(String.class))).thenReturn(keyPair);
-        KeyPair keyPair = smsKeyPairUtil.register(token, temail);
+        KeyPair keyPair = smsKeyPairUtil.register(token, email);
         assertThat(keyPair).isNotNull();
         assertThat(keyPair.getPrivateKey()).isNotNull();
         assertThat(keyPair.getPublicKey()).isNotNull();
-        assertThat(keyPair.getTemail()).isEqualTo(temail);
+        assertThat(keyPair.getEmail()).isEqualTo(email);
         assertThat(keyPair.getToken()).isEqualTo(token);
 
     }
 
     @Test(expected = QueryKeyPairIsNullException.class)
-    public void queryKeyPairByTemailNotFound(){
-        smsKeyPairUtil.queryKeyPairByTemail(this.token, this.temail);
+    public void queryKeyPairByEmailNotFound(){
+        smsKeyPairUtil.queryKeyPairByEmail(this.token, this.email);
     }
 
     @Test
-    public void  QueryKeyPairByTemailSuccessfully(){
-        when(httpUtil.queryKeyPairByTemail(any(String.class), any(String.class))).thenReturn(this.keyPair);
-        KeyPair keyPair = smsKeyPairUtil.queryKeyPairByTemail(this.token, this.temail);
+    public void  QueryKeyPairByEmailSuccessfully(){
+        when(httpUtil.queryKeyPairByEmail(any(String.class), any(String.class))).thenReturn(this.keyPair);
+        KeyPair keyPair = smsKeyPairUtil.queryKeyPairByEmail(this.token, this.email);
         assertThat(keyPair).isNotNull();
         assertThat(keyPair.getPublicKey()).isNotNull();
     }
@@ -82,7 +82,7 @@ public class SmsKeyPairUtilTest {
     @Test
     public void encryptSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
-        String result = smsKeyPairUtil.encrypt(token, temail, strTest);
+        String result = smsKeyPairUtil.encrypt(token, email, strTest);
         // System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(strTest);
@@ -96,9 +96,9 @@ public class SmsKeyPairUtilTest {
     @Test
     public void decryptSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
-        String encrypt = smsKeyPairUtil.encrypt(token, temail, strTest);
+        String encrypt = smsKeyPairUtil.encrypt(token, email, strTest);
         // System.out.println("encrypt : "+encrypt);
-        String result = smsKeyPairUtil.decrypt(token, this.temail, encrypt);
+        String result = smsKeyPairUtil.decrypt(token, this.email, encrypt);
         // System.out.println("result : "+result);
         assertThat(result).isNotNull();
         assertThat(result).isNotEqualTo(encrypt);
@@ -112,7 +112,7 @@ public class SmsKeyPairUtilTest {
     @Test
     public void signSuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
-        String strSign = smsKeyPairUtil.sign(token, temail, strTest);
+        String strSign = smsKeyPairUtil.sign(token, email, strTest);
         // System.out.println("strSign : " + strSign);
         assertThat(strSign).isNotNull();
         assertThat(strSign).isNotEqualTo(strTest);
@@ -126,9 +126,9 @@ public class SmsKeyPairUtilTest {
     @Test
     public void verifySuccessfully(){
         when(ehcache.get(any(String.class))).thenReturn(Optional.ofNullable(this.keyPair));
-        String strSign = smsKeyPairUtil.sign(token, temail, strTest);
+        String strSign = smsKeyPairUtil.sign(token, email, strTest);
         // System.out.println("sign : "+strSign);
-        boolean result = smsKeyPairUtil.verify(token, temail, strTest, strSign);
+        boolean result = smsKeyPairUtil.verify(token, email, strTest, strSign);
         assertThat(result).isEqualTo(true);
     }
 

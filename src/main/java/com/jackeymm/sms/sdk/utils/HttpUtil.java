@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.jackeymm.sms.sdk.config.BeanFactory;
 import com.jackeymm.sms.sdk.domains.KeyPair;
 import com.jackeymm.sms.sdk.exceptions.EncryptException;
+import com.jackeymm.sms.sdk.exceptions.SendHttpException;
 import com.jackeymm.sms.sdk.exceptions.WrongInputException;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -38,26 +39,26 @@ public class HttpUtil extends BaseHttpUtil {
         closeableHttpClient = BeanFactory.getCloseableHttpClientInstance();
     }
 
-    public KeyPair registerKeypair(String token, String temail) {
-        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(temail)){
-            throw new WrongInputException("token : " + token + "| temail : " + temail);
+    public KeyPair registerKeypair(String token, String email) {
+        if(StringUtil.isEmpty(token) || StringUtil.isEmpty(email)){
+            throw new WrongInputException("token : " + token + "| email : " + email);
         }
 
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("token", token);
-        paramMap.put("temail", temail);
+        paramMap.put("email", email);
 
         String registerUrl = httpPath + REGISTER;
 
         return String2KeyPair(postMap(registerUrl, paramMap));
     }
 
-    public KeyPair queryKeyPairByTemail(String token, String temail) {
-        if(StringUtil.isEmpty(temail)){
-            throw new WrongInputException("temail : " + temail);
+    public KeyPair queryKeyPairByEmail(String token, String email) {
+        if(StringUtil.isEmpty(email)){
+            throw new WrongInputException("email : " + email);
         }
 
-        String queryUrl = httpPath + QUERYKEYPAIR + "/token/" + token + "/temails/" + temail;
+        String queryUrl = httpPath + QUERYKEYPAIR + "/token/" + token + "/emails/" + email;
 
         return String2KeyPair(get(queryUrl));
     }
@@ -70,18 +71,12 @@ public class HttpUtil extends BaseHttpUtil {
      */
     public String postMap(String url, Map<String,String> map) {
         String result = null;
-        HttpPost post = new HttpPost(url);
         List<NameValuePair> pairs = new ArrayList<>();
         for(Map.Entry<String,String> entry : map.entrySet()){
             pairs.add(new BasicNameValuePair(entry.getKey(),entry.getValue()));
         }
-        CloseableHttpResponse response = null;
         try {
-            //设置参数到请求对象中
-            post.setEntity(new UrlEncodedFormEntity(pairs,"UTF-8"));
-            post.setHeader("Content-Type","application/x-www-form-urlencoded");
-
-            response = closeableHttpClient.execute(post);
+            CloseableHttpResponse response = sendPost(url, pairs);
             if(response != null && response.getStatusLine().getStatusCode() == 201){
                 HttpEntity entity = response.getEntity();
                 result = entityToString(entity);
@@ -91,6 +86,21 @@ public class HttpUtil extends BaseHttpUtil {
             throw new EncryptException(e.getMessage());
         }finally {
         }
+    }
+
+    public CloseableHttpResponse sendPost(String url,  List<NameValuePair> pairs){
+        HttpPost post = new HttpPost(url);
+        CloseableHttpResponse response;
+        try {
+            //设置参数到请求对象中
+            post.setEntity(new UrlEncodedFormEntity(pairs,"UTF-8"));
+            post.setHeader("Content-Type","application/x-www-form-urlencoded");
+            response = closeableHttpClient.execute(post);
+        } catch (IOException e) {
+            throw new SendHttpException(e.getMessage());
+        }finally {
+        }
+        return response;
     }
 
 
@@ -137,7 +147,7 @@ public class HttpUtil extends BaseHttpUtil {
         }
     }
 
-    private KeyPair String2KeyPair(String httpResult) {
+    public KeyPair String2KeyPair(String httpResult) {
         Gson gson = new Gson();
         Map resultMap = gson.fromJson(httpResult, Map.class);
         Map<String, String> map = (Map<String, String>) resultMap.get("data");
@@ -146,7 +156,7 @@ public class HttpUtil extends BaseHttpUtil {
         keyPair.setToken(map.get("token"));
         keyPair.setPrivateKey(map.get("privateKey"));
         keyPair.setPublicKey(map.get("publicKey"));
-        keyPair.setTemail(map.get("temail"));
+        keyPair.setEmail(map.get("email"));
         return keyPair;
     }
 
